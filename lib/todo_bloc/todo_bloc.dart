@@ -25,11 +25,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   void _onAddTodo(TodoAdded event, Emitter<TodoState> emit) async {
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      // List<TodoModel> temp = [];
-      // temp.addAll(state.todos);
-      print(event.todo.title);
       Boxes.getTodos().add(event.todo);
-      print(Boxes.getTodos().values.toList());
       emit(state.copyWith(
           todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
@@ -51,10 +47,8 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   }
 
   void _onUpdateTodo(TodoUpdated event, Emitter<TodoState> emit) {
-    // final TodoModel todo = event
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      // state.todos[event.index].isDone = !state.todos[event.index].isDone;
       Boxes.getTodos().values.elementAt(event.index).isDone = event.isDone;
       emit(state.copyWith(
           todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));

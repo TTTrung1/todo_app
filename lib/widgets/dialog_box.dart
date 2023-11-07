@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_todolist/model/todo_model.dart';
 
+import '../notification/notification.dart';
 import '../todo_bloc/todo_bloc.dart';
 
 class DialogBox extends StatefulWidget {
@@ -70,7 +71,7 @@ class _DialogBoxState extends State<DialogBox> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                        onPressed: () {
+                        onPressed: titleTEC.text.isEmpty ? null : () {
                           final title = titleTEC.text;
                           final description = descriptionTEC.text;
                           widget.onClicked(
@@ -92,6 +93,7 @@ class _DialogBoxState extends State<DialogBox> {
                           titleTEC.clear();
                           descriptionTEC.clear();
                           Navigator.of(context).pop('Cancel');
+                          LocalNotification().showNotification(title: 'Hello',body: 'Noti');
                         },
                         child: Text(
                           'Cancel',

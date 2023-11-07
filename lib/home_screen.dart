@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:test_todolist/box/boxes.dart';
 import 'package:test_todolist/model/todo_model.dart';
+import 'package:test_todolist/notification/notification.dart';
 import 'package:test_todolist/todo_bloc/todo_bloc.dart';
 import 'package:test_todolist/widgets/dialog_box.dart';
 
@@ -20,6 +21,12 @@ class _MyHomePageState extends State<MyHomePage> {
   final descriptionController = TextEditingController();
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    LocalNotification().initNotification();
+  }
+  @override
   void dispose() {
     Hive.box('todo').close();
     super.dispose();
@@ -32,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ..isDone = isDone;
     // final box = Boxes.getTodos();
     context.read<TodoBloc>().add(TodoAdded(todo));
+    LocalNotification().showNotification(title: todo.title,body: todo.description ?? 'Nothing');
     // await box.add(todo);
   }
 
@@ -88,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ));
           },
           child: Container(
-            margin: const EdgeInsets.all(20),
+            margin: const EdgeInsets.symmetric(horizontal: 10,vertical: 5),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
                 color: Theme.of(context).canvasColor,
@@ -134,13 +142,15 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget buildContent(List<TodoModel> todos) {
     return SizedBox(
       height: MediaQuery.of(context).size.height,
-      child: ListView.builder(
+      child: ListView.separated(
         itemCount: todos.length,
         itemBuilder: (BuildContext context, int index) {
           return buildTodoItem(
             todos[index],index
           );
-        },
+        }, separatorBuilder: (BuildContext context, int index) {
+          return const Divider(thickness: 0,);
+      },
       ),
     );
   }
@@ -166,7 +176,6 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (BuildContext context, box, Widget? child) {
               final todos = box.values.toList().cast<TodoModel>();
               if (todos.isEmpty) {
-                print('No data');
                 return const Center(child: Text('No data available'));
               }
               return buildContent(todos);
