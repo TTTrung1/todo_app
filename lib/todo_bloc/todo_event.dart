@@ -32,8 +32,9 @@ class TodoRemoved extends TodoEvent {
 
 class TodoUpdated extends TodoEvent {
   final int index;
+  final bool isDone;
 
-  const TodoUpdated(this.index);
+  const TodoUpdated(this.index,this.isDone);
 
   @override
   List<Object?> get props => [index];

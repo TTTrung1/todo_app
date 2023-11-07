@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:test_todolist/box/boxes.dart';
 import 'package:test_todolist/model/todo_model.dart';
+import 'package:test_todolist/todo_bloc/todo_bloc.dart';
 import 'package:test_todolist/widgets/dialog_box.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -17,20 +19,20 @@ class _MyHomePageState extends State<MyHomePage> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
 
-
   @override
   void dispose() {
     Hive.box('todo').close();
     super.dispose();
   }
 
-  Future addTodo(String title, String description, bool isDone) async {
+  void addTodo(String title, String description, bool isDone)  {
     final todo = TodoModel()
       ..title = title
       ..description = description
       ..isDone = isDone;
-    final box = Boxes.getTodos();
-    await box.add(todo);
+    // final box = Boxes.getTodos();
+    context.read<TodoBloc>().add(TodoAdded(todo));
+    // await box.add(todo);
   }
 
   void showCreateDialog() {
@@ -41,74 +43,88 @@ class _MyHomePageState extends State<MyHomePage> {
             ));
   }
 
-  Future<void> updateTodo(
-      TodoModel todo, String title, String description, bool isDone) async {
+  void updateTodo(TodoModel todo, bool isDone,int index) {
+    todo.isDone = isDone;
+    todo.save();
+    context.read<TodoBloc>().add(TodoUpdated(index,isDone));
+  }
+
+  void alterTodo(TodoModel todo, String title, String description,int index) {
     todo.title = title;
     todo.description = description;
-    todo.isDone = isDone;
-    await todo.save();
+    todo.save();
+    context.read<TodoBloc>().add(TodoAltered(index, todo));
+
   }
 
   void deleteTodo(TodoModel todo) {
-    todo.delete();
+    // todo.delete();
+    context.read<TodoBloc>().add(TodoRemoved(todo));
   }
 
-  Widget buildTodoItem(TodoModel todo) {
-    return Slidable(
-      endActionPane: ActionPane(
-        motion: const StretchMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (context) => deleteTodo(todo),
-            icon: Icons.delete,
-            backgroundColor: Colors.red,
-            borderRadius: BorderRadius.circular(10),
-          )
-        ],
-      ),
-      child: GestureDetector(
-        onLongPress: () {
-          showDialog(
-              context: context,
-              builder: (context) => DialogBox(
-                    todoItem: todo,
-                    onClicked: (title,description,isDone) => updateTodo(todo,title,description,isDone),
-                  ));
-        },
-        child: Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-              color: Theme.of(context).canvasColor,
-              borderRadius: BorderRadius.circular(5)),
-          child: Row(
-            children: [
-              Checkbox(
-                  activeColor: Colors.white54,
-                  value: todo.isDone,
-                  onChanged: (value) {
-                    setState(() {
-                      todo.isDone = value!;
-                      updateTodo(todo, todo.title, todo.description, todo.isDone);
-                    });
-                  }),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    todo.title,
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        decoration: todo.isDone
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none),
-                  ),
-                  Text(
-                    todo.description,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                ],
-              ),
-            ],
+  Widget buildTodoItem(TodoModel todo,int index) {
+    return BlocProvider(
+      create: (context) => TodoBloc(),
+      child: Slidable(
+        endActionPane: ActionPane(
+          motion: const StretchMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (context) => deleteTodo(todo),
+              icon: Icons.delete,
+              backgroundColor: Colors.red,
+              borderRadius: BorderRadius.circular(10),
+            )
+          ],
+        ),
+        child: GestureDetector(
+          onLongPress: () {
+            showDialog(
+                context: context,
+                builder: (context) => DialogBox(
+                      todoItem: todo,
+                      onClicked: (title, description, isDone) =>
+                          alterTodo(todo, title, description,index),
+                    ));
+          },
+          child: Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: Theme.of(context).canvasColor,
+                borderRadius: BorderRadius.circular(5)),
+            child: Row(
+              children: [
+                Checkbox(
+                    activeColor: Colors.white54,
+                    value: todo.isDone,
+                    onChanged: (value) {
+                      setState(() {
+                        todo.isDone = value!;
+                        updateTodo(todo, todo.isDone,index);
+                      });
+                    }),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      todo.title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayMedium
+                          ?.copyWith(
+                              decoration: todo.isDone
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none),
+                    ),
+                    Text(
+                      todo.description,
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -121,7 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
       child: ListView.builder(
         itemCount: todos.length,
         itemBuilder: (BuildContext context, int index) {
-          return buildTodoItem(todos[index],
+          return buildTodoItem(
+            todos[index],index
           );
         },
       ),
@@ -139,11 +156,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 Text('TO DO', style: Theme.of(context).textTheme.titleLarge)),
         elevation: 0,
       ),
-      body: ValueListenableBuilder<Box<TodoModel>>(
-        valueListenable: Boxes.getTodos().listenable(),
-        builder: (BuildContext context, box, Widget? child) {
-          final todos = box.values.toList().cast<TodoModel>();
-          return buildContent(todos);
+      body: BlocBuilder<TodoBloc, TodoState>(
+        builder: (context, state) {
+          if (state.status == TodoStatus.initial) {
+            return const CircularProgressIndicator();
+          }
+          return ValueListenableBuilder<Box<TodoModel>>(
+            valueListenable: Boxes.getTodos().listenable(),
+            builder: (BuildContext context, box, Widget? child) {
+              final todos = box.values.toList().cast<TodoModel>();
+              if (todos.isEmpty) {
+                print('No data');
+                return const Center(child: Text('No data available'));
+              }
+              return buildContent(todos);
+            },
+          );
         },
       ),
       floatingActionButton: FloatingActionButton(

@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:test_todolist/box/boxes.dart';
 import 'package:test_todolist/model/todo_model.dart';
 
 part 'todo_event.dart';
@@ -17,28 +18,33 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
   void _onStarted(TodoStarted event, Emitter<TodoState> emit) {
     if (state.status == TodoStatus.success) return;
-    emit(state.copyWith(todos: state.todos, status: TodoStatus.success));
+    emit(state.copyWith(
+        todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
   }
 
-  void _onAddTodo(TodoAdded event, Emitter<TodoState> emit) async{
+  void _onAddTodo(TodoAdded event, Emitter<TodoState> emit) async {
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      List<TodoModel> temp = [];
-      temp.addAll(state.todos);
-      temp.insert(0, event.todo);
-      emit(state.copyWith(todos: temp, status: TodoStatus.success));
+      // List<TodoModel> temp = [];
+      // temp.addAll(state.todos);
+      print(event.todo.title);
+      Boxes.getTodos().add(event.todo);
+      print(Boxes.getTodos().values.toList());
+      emit(state.copyWith(
+          todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
       emit(state.copyWith(status: TodoStatus.error));
     }
   }
 
-  void _onRemoveTodo(TodoRemoved event, Emitter<TodoState> emit) {
-    // final TodoModel todo = event.todo;
+  void _onRemoveTodo(TodoRemoved event, Emitter<TodoState> emit) async {
+    final TodoModel todo = event.todo;
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      state.todos.remove(event.todo);
-      // await todo.delete();
-      emit(state.copyWith(todos: state.todos, status: TodoStatus.success));
+      // Boxes.getTodos().delete(event.todo);
+      await todo.delete();
+      emit(state.copyWith(
+          todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
       emit(state.copyWith(status: TodoStatus.error));
     }
@@ -48,8 +54,10 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     // final TodoModel todo = event
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      state.todos[event.index].isDone = !state.todos[event.index].isDone;
-      emit(state.copyWith(todos: state.todos, status: TodoStatus.success));
+      // state.todos[event.index].isDone = !state.todos[event.index].isDone;
+      Boxes.getTodos().values.elementAt(event.index).isDone = event.isDone;
+      emit(state.copyWith(
+          todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
       emit(state.copyWith(status: TodoStatus.error));
     }
@@ -59,8 +67,10 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     final TodoModel todo = event.todo;
     emit(state.copyWith(status: TodoStatus.loading));
     try {
-      state.todos[event.index] = todo;
-      emit(state.copyWith(todos: state.todos, status: TodoStatus.success));
+      Boxes.getTodos().values.elementAt(event.index).title = todo.title;
+      Boxes.getTodos().values.elementAt(event.index).description = todo.description;
+      emit(state.copyWith(
+          todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
       emit(state.copyWith(status: TodoStatus.error));
     }
