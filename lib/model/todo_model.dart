@@ -12,6 +12,9 @@ class TodoModel extends HiveObject{
 
   @HiveField(2)
   late bool isDone = false;
+
+  @HiveField(3)
+  late DateTime dueDate;
 }
 
 // class TodoModel{

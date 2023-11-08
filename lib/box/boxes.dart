@@ -3,5 +3,5 @@ import 'package:test_todolist/model/todo_model.dart';
 
 class Boxes {
   static Box<TodoModel> getTodos() =>
-      Hive.box<TodoModel>('todo');
+      Hive.box<TodoModel>('todoapp');
 }

@@ -32,14 +32,15 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  void addTodo(String title, String description, bool isDone)  {
+  void addTodo(String title, String description, bool isDone,DateTime dueDate)  {
     final todo = TodoModel()
       ..title = title
       ..description = description
-      ..isDone = isDone;
+      ..isDone = isDone
+      ..dueDate = dueDate;
     // final box = Boxes.getTodos();
     context.read<TodoBloc>().add(TodoAdded(todo));
-    LocalNotification().showNotification(title: todo.title,body: todo.description ?? 'Nothing');
+    // LocalNotification().showNotification(title: todo.title,body: todo.description ?? 'Nothing');
     // await box.add(todo);
   }
 
@@ -57,9 +58,10 @@ class _MyHomePageState extends State<MyHomePage> {
     context.read<TodoBloc>().add(TodoUpdated(index,isDone));
   }
 
-  void alterTodo(TodoModel todo, String title, String description,int index) {
+  void alterTodo(TodoModel todo, String title, String description,int index,DateTime dueDate) {
     todo.title = title;
     todo.description = description;
+    todo.dueDate = dueDate;
     todo.save();
     context.read<TodoBloc>().add(TodoAltered(index, todo));
 
@@ -91,8 +93,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 context: context,
                 builder: (context) => DialogBox(
                       todoItem: todo,
-                      onClicked: (title, description, isDone) =>
-                          alterTodo(todo, title, description,index),
+                      onClicked: (title, description, isDone,dueDate) =>
+                          alterTodo(todo, title, description,index,dueDate),
                     ));
           },
           child: Container(
@@ -102,16 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: Theme.of(context).canvasColor,
                 borderRadius: BorderRadius.circular(5)),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Checkbox(
-                    activeColor: Colors.white54,
-                    value: todo.isDone,
-                    onChanged: (value) {
-                      setState(() {
-                        todo.isDone = value!;
-                        updateTodo(todo, todo.isDone,index);
-                      });
-                    }),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -129,8 +123,19 @@ class _MyHomePageState extends State<MyHomePage> {
                       todo.description,
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
+                    const Divider(),
+                    Text(todo.dueDate.toString().substring(0,19))
                   ],
                 ),
+                Checkbox(
+                    activeColor: Colors.white54,
+                    value: todo.isDone,
+                    onChanged: (value) {
+                      setState(() {
+                        todo.isDone = value!;
+                        updateTodo(todo, todo.isDone,index);
+                      });
+                    }),
               ],
             ),
           ),

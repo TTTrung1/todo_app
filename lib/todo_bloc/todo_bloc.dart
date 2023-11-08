@@ -63,6 +63,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     try {
       Boxes.getTodos().values.elementAt(event.index).title = todo.title;
       Boxes.getTodos().values.elementAt(event.index).description = todo.description;
+      Boxes.getTodos().values.elementAt(event.index).dueDate = todo.dueDate;
       emit(state.copyWith(
           todos: Boxes.getTodos().values.toList(), status: TodoStatus.success));
     } catch (e) {
